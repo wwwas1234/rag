@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light"><!-- 第一版不做暗色(设计文档 §8) -->
+  <title>RAG 数据入库</title>
+  <link rel="stylesheet" href="./app.css">
+</head>
+<body data-page="data">
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor"
+           stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4 7.5 12 4l8 3.5-8 3.5-8-3.5Z"/>
+        <path d="M4 12.5 12 16l8-3.5"/>
+        <path d="M4 17 12 20.5 20 17"/>
+      </svg>
+      <span>RAG 问答系统</span>
+    </div>
+
+    <nav class="nav">
+      <a class="nav-item" href="./">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+             stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20.5 12a7.5 7.5 0 0 1-7.5 7.5H8L4 22v-4.6A7.5 7.5 0 0 1 7.5 4.5H13A7.5 7.5 0 0 1 20.5 12Z"/>
+        </svg>
+        问答
+      </a>
+      <a class="nav-item is-active" href="./data.html" aria-current="page">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+             stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <ellipse cx="12" cy="6" rx="7.5" ry="3"/>
+          <path d="M4.5 6v12c0 1.66 3.36 3 7.5 3s7.5-1.34 7.5-3V6"/>
+          <path d="M4.5 12c0 1.66 3.36 3 7.5 3s7.5-1.34 7.5-3"/>
+        </svg>
+        数据
+      </a>
+    </nav>
+
+    <div class="sidebar-foot">
+      <span class="foot-label">当前会话</span>
+      <code id="session-label" title="">—</code>
+    </div>
+  </aside>
+
+  <div class="content">
+    <header class="page-head">
+      <div class="page-title">
+        <h1>数据</h1>
+        <p class="page-sub">上传资料入库,回到「问答」就能检索到它。</p>
+      </div>
+    </header>
+
+    <div class="page-body">
+      <div class="stack">
+
+        <label class="dropzone" id="dropzone" tabindex="0">
+          <svg class="dz-icon" viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor"
+               stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 16V4"/>
+            <path d="m7.5 8.5 4.5-4.5 4.5 4.5"/>
+            <path d="M4.5 15v3A2.5 2.5 0 0 0 7 20.5h10a2.5 2.5 0 0 0 2.5-2.5v-3"/>
+          </svg>
+          <span class="dz-title">点击选择文件</span>
+          <span class="dz-hint">或把文件拖到这里 · 支持 .txt / .md / .csv</span>
+          <input type="file" id="file-input" accept=".txt,.md,.csv" hidden>
+        </label>
+
+        <div id="upload-status" class="upload-status" role="status" hidden></div>
+
+        <section class="card">
+          <h2 class="card-title">入库规则</h2>
+          <ul class="facts">
+            <li>只收 <code>.txt</code> / <code>.md</code> / <code>.csv</code> 纯文本,白名单在后端校验,结果原样显示。</li>
+            <li>编码按 UTF-8 → GB18030 → Big5 依次尝试,中文 GBK 文件不会乱码。</li>
+            <li>按段落切分入库,重复段落自动跳过;同名文件重传会清掉上次多出来的段落。</li>
+          </ul>
+        </section>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast-layer" class="toast-layer" role="status" aria-live="polite"></div>
+
+<script src="./app.js"></script>
+</body>
+</html>

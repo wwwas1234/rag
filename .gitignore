@@ -1,0 +1,46 @@
+# gitignore for rag/
+# NOTE: comment must be on its OWN line.
+# Trailing text after a space on a pattern line is NOT a comment in gitignore syntax.
+
+# --- 1. secrets (highest priority) ---
+key.env
+.env
+.env.*
+*.env
+!*.env.example
+
+# --- 2. python deps / venv ---
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- 3. data and generated artifacts ---
+data/
+*.db
+*.sqlite
+*.sqlite3
+chroma_db/
+logs/
+*.log
+
+# --- 4. go build output ---
+go/bin/
+go/pkg/
+*.exe
+*.test
+
+# --- 5. editor / OS ---
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# NOTE: uv.lock and go.sum MUST be committed (dependency lockfiles).
