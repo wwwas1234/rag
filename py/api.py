@@ -2,14 +2,27 @@
 #
 # 与设计文档《RAG-前端三件套设计》的差异,只有静态文件这一段:
 #   文档 §4/§5 假定前端放在 rag/web/,每条静态文件写一条路由;
-#   实际前端在 rag/py/js_html_css/ 且有 index.html + data.html 两个页面,
+#   实际前端在 rag/js_html_css/ 且有 index.html + data.html 两个页面,
 #   所以这里改成 WEB_DIR 指向该目录、静态文件按文件名查表伺服(白名单,防目录穿越)。
 #   §3 的 4 个 HTTP 契约与文档完全一致,前端一个字都不用改。
+#
+# 两种启动方式都支持:
+#   1) python py/api.py                        ← 直接跑本文件
+#   2) python -m uvicorn py.api:app            ← 文档 §9 的方式(需 cwd 在 rag/)
 import json
+import os
+import sys
 from pathlib import Path
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+
+# ★ 直接 `python py/api.py` 时,__package__ 是空的,相对导入必然失败;
+#   把它换成绝对导入之前,得先让 py/ 可被搜索 —— 这就是之前
+#   "attempted relative import with no known parent package" 的原因。
+#   这里显式把本文件所在目录塞进 sys.path(其他模块的双导入写法也因此能兜住)。
+if __package__ in (None, ""):
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 try:                      # 和你其他模块同款的双导入写法
     from . import file_histry as fh
@@ -150,19 +163,22 @@ def chat(question: str = Form(...), session_id: str = Form(...)):
 
 
 if __name__ == "__main__":
-    # 直接 `python py/api.py` 也能起:先把 key.env 读进环境再 import(rag.py 需要 api_key_jev)。
-    # 但用文档 §9 的 uvicorn 命令时,这一步要你自己先加载 key.env,见文末提示。
-    import os
-    from pathlib import Path as _Path
-
-    env_file = _Path(__file__).resolve().parent.parent / "key.env"
+    # 直接 `python py/api.py` 也能起。
+    # ★ 顺序很重要:rag.py 在「导入时」就会读 os.environ["api_key_jev"],
+    #   所以 key.env 必须在 import api 之前就进环境 ——
+    #   config.py 里的 load_dotenv 是在 rag.py 之后才被触发的,救不了这一场。
+    #   注意 __main__ 时本模块早已导入完毕,所以这里只补环境变量,不再重复导入。
+    env_file = Path(__file__).resolve().parent.parent / "key.env"
     if env_file.is_file():
         for line in env_file.read_text(encoding="utf-8").splitlines():
             line = line.strip()
             if not line or line.startswith("#") or "=" not in line:
                 continue
-            k, v = line.split("=", 1)
-            os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+            key, value = line.split("=", 1)
+            os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
 
     import uvicorn
-    uvicorn.run("api:app", host="127.0.0.1", port=8000, reload=False)
+
+    # ★ 传 app 对象本身,不要传 "api:app" 这种导入字符串:那会让 uvicorn
+    #   按字符串再导入一次,__main__ 下模块名对不上,等于把本文件跑第二遍。
+    uvicorn.run(app, host="127.0.0.1", port=8000, reload=False)
